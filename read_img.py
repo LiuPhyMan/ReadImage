@@ -12,7 +12,7 @@ import math
 from matplotlib import pyplot as plt
 import cv2
 
-im = cv2.imread(r"E:\PHOTO_exp\JPG\DSC_0457.JPG")  # Read image
+im = cv2.imread(r"M:\DCIM\100D5100\DSC_0159.JPG")  # Read image
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.imshow(im)
@@ -48,6 +48,7 @@ def circle_center(a, b):
     C2 = x3 ** 2 + y3 ** 2 - x2 ** 2 - y2 ** 2
     x = ((C1 * B2) - (C2 * B1)) / ((A1 * B2) - (A2 * B1))
     y = ((A1 * C2) - (A2 * C1)) / ((A1 * B2) - (A2 * B1))
+    print("{x},{y}".format(x=x, y=y))
     AO = math.sqrt((x1 - x) ** 2 + (y1 - y) ** 2)
     BO = math.sqrt((x2 - x) ** 2 + (y2 - y) ** 2)
     AB = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
