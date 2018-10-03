@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 from PyQt5 import QtWidgets as QW
 
 import sys
-
+r"""
 sys.path.insert(0, "E:\Coding\Python\ImportToUse")
 from BetterQWidgets import BetterQLabel, BetterButton, QPlot
 
@@ -33,8 +33,8 @@ class TheWindow(QW.QMainWindow):
         _layout.addWidget(self._image)
         self.cenWidget.setLayout(_layout)
 
-    def imshow(self, im_data):
-        self.
+    # def imshow(self, im_data):
+    #     self.
 
 
 if __name__ == '__main__':
@@ -46,9 +46,9 @@ if __name__ == '__main__':
     window = TheWindow()
     window.show()
     app.aboutToQuit.connect(app.deleteLater)
+"""
 
-r"""
-im_gray = cv.imread(r"D:\Desktop\DSC_0759.JPG", cv.IMREAD_GRAYSCALE)
+im_gray = cv.imread(r"N:\JPG\DSC_0268.JPG", cv.IMREAD_GRAYSCALE)
 
 
 # M = cv.getRotationMatrix2D((2000, 2000), 40, 1.0)
@@ -63,19 +63,23 @@ def rotate_img(_im, angle):
 def show_gray_image(_im_gray):
     im_color_BGR = cv.applyColorMap(_im_gray, cv.COLORMAP_JET)
     # matplotlib use RGB, OpenCV use BGR.
-    im_color_RGB = cv.cvtColor(im_color_BGR, cv.COLORMAP_JET)
-    fig = plt.figure()
-    axes = fig.add_subplot(111)
-    axes.imshow(im_color_RGB)
+    im_color_RGB = cv.cvtColor(im_color_BGR, cv.COLOR_BGR2RGB)
+    # fig = plt.figure()
+    # axes = fig.add_subplot(111)
+    # plt.imshow(im_color_RGB, vmin=0, vmax=120)
+    plt.imshow(_im_gray, vmin=0, vmax=120)
 
+show_gray_image(im_gray)
+show_gray_image(rotate_img(im_gray, 15))
 
-fig = plt.figure()
-axes = fig.add_subplot(111)
-im = axes.imshow(im_gray)
+# fig = plt.figure()
+# axes = fig.add_subplot(111)
+# im = axes.imshow(im_gray)
 # axes.imshow(rotate_img(im_gray, 90))
 # axes.get
 # cv2.imshow('image', rotated90)
 # cv2.resizeWindow('image', 800, 600)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
+r"""
 """
