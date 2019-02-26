@@ -83,6 +83,7 @@ class DrawLine(object):
         line_length = math.sqrt((self.xdata[1] - self.xdata[0]) ** 2 +
                                 (self.ydata[1] - self.ydata[0]) ** 2)
         data_on_line = np.array(data_on_line)
+        self.data_on_line = data_on_line
         self.line_seq = np.linspace(0, line_length, num=2000)
         self.in_line.set_xdata(self.line_seq)
         self.in_line.set_ydata(data_on_line)
@@ -109,7 +110,7 @@ class DrawLine(object):
         pass
 
 # ----------------------------------------------------------------------------------------------- #
-image_filename_id = 'DSC_0289.jpg'
+image_filename_id = 'DSC_0378.jpg'
 im_gray = cv2.imread(r"I:\JPG\\" + image_filename_id, cv2.IMREAD_GRAYSCALE)
 im_color = cv2.applyColorMap(im_gray, cv2.COLORMAP_RAINBOW)
 fig0 = plt.figure(figsize=(14, 11))
