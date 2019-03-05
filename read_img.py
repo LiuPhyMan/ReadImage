@@ -11,12 +11,13 @@ Created on 15:05 2018/7/28
 import sys
 import math
 import cv2
+import numpy as np
 from PIL import Image
 from PIL.ExifTags import TAGS
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QAction
 from BetterQWidgets import QPlot, ReadFileQWidget
 
 
@@ -62,15 +63,24 @@ class TheWindow(QW.QMainWindow):
         self._exif_table = QW.QTableWidget()
         self._exif_table.setColumnCount(2)
         self._exif_table.setRowCount(7)
+        self._exif_table.setFixedWidth(220)
+        self.im_data_rgb = None
         self.setCentralWidget(self.cenWidget)
         self.setWindowIcon(QIcon('matplotlib_large.png'))
         self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
+        self._set_toolbar()
         self._set_layout()
         self._set_connect()
 
         self.init_marks()
         self.hide_marks()
         self._imag_show.set_focus()
+
+    def _set_toolbar(self):
+        _to_gray = QAction("ToGray", self)
+        self._toolbar = self.addToolBar('To')
+        self._toolbar.addAction(_to_gray)
+        _to_gray.triggered.connect(self.show_gray)
 
     def get_exif(self, file_path):
         image = Image.open(file_path)
@@ -187,13 +197,18 @@ class TheWindow(QW.QMainWindow):
         _layout1 = QW.QHBoxLayout()
         _layout1.addWidget(self._imag_show)
         _layout1.addWidget(self._exif_table)
+        _layout1.addStretch(1)
         _layout = QW.QVBoxLayout()
         _layout.addLayout(_layout1)
         _layout.addWidget(self._read_file)
+        _layout.addStretch(1)
         self.cenWidget.setLayout(_layout)
 
     def _set_connect(self):
-        self._read_file.pathChanged.connect(self.imshow)
+        def _show_read_im():
+            self.im_read(self._read_file.path)
+            self.im_show(self.im_data_rgb)
+        self._read_file.pathChanged.connect(_show_read_im)
         self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
 
     def click_callback(self, event):
@@ -210,17 +225,20 @@ class TheWindow(QW.QMainWindow):
             return None
         self.set_O_mark()
 
-    def imshow(self):
-        print('show_image')
-        file_path = self._read_file.path
-        im = cv2.imread(file_path)
-        b, g, r = cv2.split(im)
-        im = cv2.merge([r, g, b])
-        self._imag_show.imshow(im)
+    def im_read(self, file_path):
+        self.im_data_rgb = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+
+    def show_gray(self):
+        self.im_show(cv2.cvtColor(self.im_data_rgb, cv2.COLOR_RGB2GRAY))
+
+    def im_show(self, im_data_to_show):
+        self._imag_show.imshow(im_data_to_show)
         self.init_marks()
         self.hide_marks()
         self._imag_show.set_focus()
-        exif_info = self.get_exif(file_path)
+
+    def show_exif_info(self):
+        exif_info = self.get_exif(self._read_file.path)
         for i, key in enumerate(exif_info.keys()):
             self._exif_table.setItem(i, 0, QW.QTableWidgetItem(key))
             self._exif_table.setItem(i, 1, QW.QTableWidgetItem(exif_info[key]))
