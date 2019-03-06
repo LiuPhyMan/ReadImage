@@ -4,12 +4,20 @@ import cv2
 from scipy.interpolate import interp2d
 from matplotlib import pyplot as plt
 
+
+def im_read(file_path):
+    return cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+
+
 class DrawLine(object):
 
     def __init__(self, ax0, ax1):
         self.ax0 = ax0
         self.ax1 = ax1
-        self.line, = ax0.plot([0, 0], [0, 0], color='yellow', linewidth=1., linestyle='dashed')
+        self.line, = ax0.plot([0, 0], [0, 0],
+                              color='yellow',
+                              linewidth=1.5, linestyle='-.',
+                              alpha=0.5)
         self.in_line, = ax1.plot([], [], '.-')
         self.fwhm_line, = ax1.plot([], [], color='red')
         self.xdata = [None, None]
@@ -23,6 +31,7 @@ class DrawLine(object):
         self.A_mark.set_size(18)
         self.A_mark.set_color('RED')
         self.A_mark.set_visible(False)
+        # self.A_mark.set_visible(True)
 
     def set_B_mark(self):
         self.B_mark = self.ax0.text(0, 0, 'B')
@@ -66,8 +75,8 @@ class DrawLine(object):
     def plot_line(self):
         self.line.set_xdata(self.xdata)
         self.line.set_ydata(self.ydata)
-        self.A_mark.set_visible(True)
-        self.B_mark.set_visible(True)
+        # self.A_mark.set_visible(True)
+        # self.B_mark.set_visible(True)
         self.A_mark.set_x(self.xdata[0])
         self.A_mark.set_y(self.ydata[0])
         self.B_mark.set_x(self.xdata[1])
@@ -93,6 +102,7 @@ class DrawLine(object):
         fwhm_ratio = 0.5
         fwhm = fwhm_ratio * data_on_line.min() + (1 - fwhm_ratio) * data_on_line.max()
         where_above_fwhm = np.where(data_on_line > fwhm)[0]
+        self.data_on_line = data_on_line
         fwhm_left_x = self.line_seq[where_above_fwhm[0]]
         fwhm_left_y = fwhm
         fwhm_right_y = fwhm
@@ -103,15 +113,17 @@ class DrawLine(object):
         self.fwhm_mark.set_y(fwhm)
         self.fwhm_mark.set_text('width={:.1f}'.format(fwhm_right_x - fwhm_left_x))
         self.fwhm_mark.set_visible(True)
+        np.savetxt("data.txt", np.vstack((self.line_seq, self.data_on_line)).transpose())
         # --------------------------------------------------------------------------------------- #
         self.in_line.figure.canvas.draw()
 
     def print_data(self):
         pass
 
+
 # ----------------------------------------------------------------------------------------------- #
-image_filename_id = 'DSC_0378.jpg'
-im_gray = cv2.imread(r"I:\JPG\\" + image_filename_id, cv2.IMREAD_GRAYSCALE)
+image_filename_id = 'DSC_0466.jpg'
+im_gray = cv2.imread(r"O:\_EXP_PHOTOS\2018.07.27\JPG\\" + image_filename_id, cv2.IMREAD_GRAYSCALE)
 im_color = cv2.applyColorMap(im_gray, cv2.COLORMAP_RAINBOW)
 fig0 = plt.figure(figsize=(14, 11))
 ax0 = fig0.add_subplot(111)

@@ -12,6 +12,7 @@ import sys
 import math
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 from PIL import Image
 from PIL.ExifTags import TAGS
 from PyQt5 import QtWidgets as QW
@@ -31,8 +32,13 @@ class ImagShow(QPlot):
         self.figure.tight_layout()
         self.set_focus()
 
-    def imshow(self, im):
+    def imshow(self, im, cmap=None):
         self.axes.cla()
+        if cmap is not None:
+            print(cmap)
+            self.axes.imshow(im, cmap=cmap)
+        else:
+            self.axes.imshow(im)
         self.axes.imshow(im)
         self.canvas.draw()
 
@@ -80,7 +86,7 @@ class TheWindow(QW.QMainWindow):
         _to_gray = QAction("ToGray", self)
         self._toolbar = self.addToolBar('To')
         self._toolbar.addAction(_to_gray)
-        _to_gray.triggered.connect(self.show_gray)
+        _to_gray.triggered.connect(lambda :self.im_show(cmap=plt.cm.get_cmap('gray')))
 
     def get_exif(self, file_path):
         image = Image.open(file_path)
@@ -207,7 +213,7 @@ class TheWindow(QW.QMainWindow):
     def _set_connect(self):
         def _show_read_im():
             self.im_read(self._read_file.path)
-            self.im_show(self.im_data_rgb)
+            self.im_show()
         self._read_file.pathChanged.connect(_show_read_im)
         self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
 
@@ -228,11 +234,12 @@ class TheWindow(QW.QMainWindow):
     def im_read(self, file_path):
         self.im_data_rgb = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
 
-    def show_gray(self):
-        self.im_show(cv2.cvtColor(self.im_data_rgb, cv2.COLOR_RGB2GRAY))
+    # def show_gray(self):
+    #     self._imag_show.axes.
+    #     # self.im_show(cv2.cvtColor(self.im_data_rgb, cv2.COLOR_RGB2GRAY))
 
-    def im_show(self, im_data_to_show):
-        self._imag_show.imshow(im_data_to_show)
+    def im_show(self, cmap=None):
+        self._imag_show.imshow(self.im_data_rgb, cmap)
         self.init_marks()
         self.hide_marks()
         self._imag_show.set_focus()
