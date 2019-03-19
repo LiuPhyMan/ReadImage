@@ -59,7 +59,7 @@ class TheReadFileQWidget(ReadFileQWidget):
         self._entry.setText(_path)
 
 
-class TheWindow(QW.QMainWindow):
+class ImagWindow(QW.QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -76,17 +76,15 @@ class TheWindow(QW.QMainWindow):
         self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
         self._set_toolbar()
         self._set_layout()
-        self._set_connect()
 
-        self.init_marks()
-        self.hide_marks()
         self._imag_show.set_focus()
 
-    def _set_toolbar(self):
-        _to_gray = QAction("ToGray", self)
-        self._toolbar = self.addToolBar('To')
-        self._toolbar.addAction(_to_gray)
-        _to_gray.triggered.connect(lambda :self.im_show(cmap=plt.cm.get_cmap('gray')))
+        def _read_file_callback():
+            self.im_read(self._read_file.path)
+            self.im_show()
+            self.show_exif_info()
+
+        self._read_file.pathChanged.connect(_read_file_callback)
 
     def get_exif(self, file_path):
         image = Image.open(file_path)
@@ -109,15 +107,62 @@ class TheWindow(QW.QMainWindow):
                 continue
         return exif_dict
 
+    def show_exif_info(self):
+        exif_info = self.get_exif(self._read_file.path)
+        for i, key in enumerate(exif_info.keys()):
+            self._exif_table.setItem(i, 0, QW.QTableWidgetItem(key))
+            self._exif_table.setItem(i, 1, QW.QTableWidgetItem(exif_info[key]))
+
+    def im_read(self, file_path):
+        self.im_data_rgb = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+
+    def im_show(self, cmap=None):
+        self._imag_show.imshow(self.im_data_rgb, cmap)
+        self._imag_show.set_focus()
+
+    def _set_toolbar(self):
+        _to_gray = QAction("ToGray", self)
+        self._toolbar = self.addToolBar('To')
+        self._toolbar.addAction(_to_gray)
+        _to_gray.triggered.connect(lambda: self.im_show(cmap=plt.cm.get_cmap('gray')))
+
+    def _set_layout(self):
+        _layout1 = QW.QHBoxLayout()
+        _layout1.addWidget(self._imag_show)
+        _layout1.addWidget(self._exif_table)
+        _layout1.addStretch(1)
+        _layout = QW.QVBoxLayout()
+        _layout.addLayout(_layout1)
+        _layout.addWidget(self._read_file)
+        _layout.addStretch(1)
+        self.cenWidget.setLayout(_layout)
+
+
+class TheWindow(ImagWindow):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._set_connect()
+
+        self.init_marks()
+        self.hide_marks()
+
     def init_marks(self):
-        self.A_mark, = self._imag_show.axes.plot(0, 0, marker='X', markersize=10, alpha=0.5)
-        self.B_mark, = self._imag_show.axes.plot(0, 0, marker='X', markersize=10, alpha=0.5)
-        self.C_mark, = self._imag_show.axes.plot(0, 0, marker='X', markersize=10, alpha=0.5)
-        self.O_mark, = self._imag_show.axes.plot(0, 0, marker='X', markersize=10, alpha=0.5)
-        self.A_sign = self._imag_show.axes.text(0, 0, 'A')
-        self.B_sign = self._imag_show.axes.text(0, 0, 'B')
-        self.C_sign = self._imag_show.axes.text(0, 0, 'C')
-        self.O_sign = self._imag_show.axes.text(0, 0, 'O')
+        def get_a_mark():
+            mark, = self._imag_show.axes.plot(0, 0, marker='X', markersize=10, alpha=0.5)
+            return mark
+
+        def get_a_sign(_text):
+            return self._imag_show.axes.text(0, 0, _text)
+
+        self.A_mark = get_a_mark()
+        self.B_mark = get_a_mark()
+        self.C_mark = get_a_mark()
+        self.O_mark = get_a_mark()
+        self.A_sign = get_a_sign('A')
+        self.B_sign = get_a_sign('B')
+        self.C_sign = get_a_sign('C')
+        self.O_sign = get_a_sign('O')
         for _ in [self.A_sign, self.B_sign, self.C_sign, self.O_sign]:
             _.set_size(18)
             _.set_visible(False)
@@ -199,22 +244,12 @@ class TheWindow(QW.QMainWindow):
         self.BO_line.set_ydata([y2, y])
         self._imag_show.canvas.draw()
 
-    def _set_layout(self):
-        _layout1 = QW.QHBoxLayout()
-        _layout1.addWidget(self._imag_show)
-        _layout1.addWidget(self._exif_table)
-        _layout1.addStretch(1)
-        _layout = QW.QVBoxLayout()
-        _layout.addLayout(_layout1)
-        _layout.addWidget(self._read_file)
-        _layout.addStretch(1)
-        self.cenWidget.setLayout(_layout)
-
     def _set_connect(self):
-        def _show_read_im():
-            self.im_read(self._read_file.path)
-            self.im_show()
-        self._read_file.pathChanged.connect(_show_read_im)
+        def _clear_marks():
+            self.init_marks()
+            self.hide_marks()
+
+        self._read_file.pathChanged.connect(_clear_marks)
         self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
 
     def click_callback(self, event):
@@ -231,24 +266,49 @@ class TheWindow(QW.QMainWindow):
             return None
         self.set_O_mark()
 
-    def im_read(self, file_path):
-        self.im_data_rgb = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
 
-    # def show_gray(self):
-    #     self._imag_show.axes.
-    #     # self.im_show(cv2.cvtColor(self.im_data_rgb, cv2.COLOR_RGB2GRAY))
+class CalArcLength(ImagWindow):
 
-    def im_show(self, cmap=None):
-        self._imag_show.imshow(self.im_data_rgb, cmap)
-        self.init_marks()
-        self.hide_marks()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self._imag_show.set_focus()
+        self._set_connect()
+        self.point_position = []
+        self.points = []
+        self.lines = []
 
-    def show_exif_info(self):
-        exif_info = self.get_exif(self._read_file.path)
-        for i, key in enumerate(exif_info.keys()):
-            self._exif_table.setItem(i, 0, QW.QTableWidgetItem(key))
-            self._exif_table.setItem(i, 1, QW.QTableWidgetItem(exif_info[key]))
+    def add_a_point(self, x_position, y_position):
+        if len(self.point_position) > 0:
+            self._imag_show.axes.plot([self.point_position[-1][0], x_position],
+                                      [self.point_position[-1][1], y_position],'-.',color='red')
+        self._imag_show.axes.plot(x_position, y_position,color='green',
+                                  marker='X', markersize=5, alpha=0.5,)
+        self.point_position.append([x_position, y_position])
+        self._imag_show.canvas.draw()
+        print(len(self.point_position))
+        print(len(self._imag_show.axes.lines))
+
+    def delete_a_point(self):
+        if len(self.point_position) == 0:
+            return None
+        self._imag_show.axes.lines.pop(-1)
+        if len(self.point_position) > 1:
+            self._imag_show.axes.lines.pop(-1)
+        self.point_position.pop(-1)
+        self._imag_show.canvas.draw()
+        print(len(self.point_position))
+        print(len(self._imag_show.axes.lines))
+
+    def _set_connect(self):
+        self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
+
+    def click_callback(self, event):
+        print('clicked on ({x:.0f}, {y:.0f})'.format(x=event.xdata, y=event.ydata))
+        print(event.key)
+        if event.button == 1:  # left click is need.
+            self.add_a_point(event.xdata, event.ydata)
+        if event.button == 3:  # right click.
+            self.delete_a_point()
 
 
 if __name__ == '__main__':
@@ -257,6 +317,7 @@ if __name__ == '__main__':
     else:
         app = QW.QApplication.instance()
     app.setStyle(QW.QStyleFactory.create("Fusion"))
-    window = TheWindow()
+    # window = TheWindow()
+    window = CalArcLength()
     window.show()
     app.exec_()
