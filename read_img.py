@@ -55,8 +55,8 @@ class TheReadFileQWidget(ReadFileQWidget):
     def _browse_callback(self):
         _path = QW.QFileDialog.getOpenFileName(caption='Open File',
                                                filter="imag file (*.jpg)")[0]
-        self.path = _path
         self._entry.setText(_path)
+        self.toReadFile.emit()
 
 
 class ImagWindow(QW.QMainWindow):
@@ -80,11 +80,13 @@ class ImagWindow(QW.QMainWindow):
         self._imag_show.set_focus()
 
         def _read_file_callback():
-            self.im_read(self._read_file.path)
+            print(self._read_file.path())
+            self.im_read(self._read_file.path())
             self.im_show()
+            self.clear_exif_info()
             self.show_exif_info()
 
-        self._read_file.pathChanged.connect(_read_file_callback)
+        self._read_file.toReadFile.connect(_read_file_callback)
 
     def get_exif(self, file_path):
         image = Image.open(file_path)
@@ -108,13 +110,17 @@ class ImagWindow(QW.QMainWindow):
         return exif_dict
 
     def show_exif_info(self):
-        exif_info = self.get_exif(self._read_file.path)
+        exif_info = self.get_exif(self._read_file.path())
         for i, key in enumerate(exif_info.keys()):
             self._exif_table.setItem(i, 0, QW.QTableWidgetItem(key))
             self._exif_table.setItem(i, 1, QW.QTableWidgetItem(exif_info[key]))
 
+    def clear_exif_info(self):
+        self._exif_table.clearContents()
+
     def im_read(self, file_path):
-        self.im_data_rgb = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+        im_data_bgr = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+        self.im_data_rgb = im_data_bgr[:, :, ::-1]
 
     def im_show(self, cmap=None):
         self._imag_show.imshow(self.im_data_rgb, cmap)
@@ -249,7 +255,7 @@ class TheWindow(ImagWindow):
             self.init_marks()
             self.hide_marks()
 
-        self._read_file.pathChanged.connect(_clear_marks)
+        self._read_file.toReadFile.connect(_clear_marks)
         self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
 
     def click_callback(self, event):
@@ -280,13 +286,12 @@ class CalArcLength(ImagWindow):
     def add_a_point(self, x_position, y_position):
         if len(self.point_position) > 0:
             self._imag_show.axes.plot([self.point_position[-1][0], x_position],
-                                      [self.point_position[-1][1], y_position],'-.',color='red')
-        self._imag_show.axes.plot(x_position, y_position,color='green',
-                                  marker='X', markersize=5, alpha=0.5,)
+                                      [self.point_position[-1][1], y_position], '-.',
+                                      color='yellow', alpha=0.5)
+        self._imag_show.axes.plot(x_position, y_position, color='green',
+                                  marker='X', markersize=7, alpha=0.5)
         self.point_position.append([x_position, y_position])
         self._imag_show.canvas.draw()
-        print(len(self.point_position))
-        print(len(self._imag_show.axes.lines))
 
     def delete_a_point(self):
         if len(self.point_position) == 0:
@@ -296,19 +301,40 @@ class CalArcLength(ImagWindow):
             self._imag_show.axes.lines.pop(-1)
         self.point_position.pop(-1)
         self._imag_show.canvas.draw()
-        print(len(self.point_position))
-        print(len(self._imag_show.axes.lines))
+
+    def get_length(self):
+        if len(self.point_position) <= 1:
+            return 0
+        else:
+            _length = 0
+            for i in range(1, len(self.point_position)):
+                _l = math.sqrt((self.point_position[i][0] - self.point_position[i - 1][0]) ** 2 +
+                               (self.point_position[i][1] - self.point_position[i - 1][1]) ** 2)
+                _length += _l
+            return _length
 
     def _set_connect(self):
+        def clear_marks():
+            self.point_position = []
+
+        self._read_file.toReadFile.connect(clear_marks)
         self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
 
     def click_callback(self, event):
         print('clicked on ({x:.0f}, {y:.0f})'.format(x=event.xdata, y=event.ydata))
-        print(event.key)
+        if event.key != 'alt':
+            return None
         if event.button == 1:  # left click is need.
             self.add_a_point(event.xdata, event.ydata)
         if event.button == 3:  # right click.
             self.delete_a_point()
+        print("line positions number")
+        print(len(self.point_position))
+        print("Lines number")
+        print(len(self._imag_show.axes.lines))
+        print(self.get_length())
+        clipboard = QApplication.clipboard()
+        clipboard.setText('{a:.2f}'.format(a=self.get_length()))
 
 
 if __name__ == '__main__':
@@ -316,7 +342,7 @@ if __name__ == '__main__':
         app = QW.QApplication(sys.argv)
     else:
         app = QW.QApplication.instance()
-    app.setStyle(QW.QStyleFactory.create("Fusion"))
+    app.setStyle(QW.QStyleFactory.create("Windows"))
     # window = TheWindow()
     window = CalArcLength()
     window.show()
