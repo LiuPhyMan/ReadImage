@@ -25,7 +25,7 @@ from BetterQWidgets import QPlot, ReadFileQWidget
 class ImagShow(QPlot):
 
     def __init__(self, parent=None):
-        super().__init__(parent, figsize=(9, 9))
+        super().__init__(parent, figsize=(8, 8))
         self.axes = self.figure.add_subplot(111)
         self.axes.set_xlabel("x")
         self.axes.set_ylabel("y")
@@ -319,6 +319,12 @@ class CalArcLength(ImagWindow):
 
         self._read_file.toReadFile.connect(clear_marks)
         self._imag_show.figure.canvas.mpl_connect('button_press_event', self.click_callback)
+        self._imag_show.figure.canvas.mpl_connect("key_press_event", self.key_press_callback)
+
+    def key_press_callback(self, event):
+        print(event.key)
+        if event.key == 'z':
+            self._imag_show.toolbar.pan()
 
     def click_callback(self, event):
         print('clicked on ({x:.0f}, {y:.0f})'.format(x=event.xdata, y=event.ydata))
@@ -346,4 +352,5 @@ if __name__ == '__main__':
     # window = TheWindow()
     window = CalArcLength()
     window.show()
-    app.exec_()
+    # app.exec_()
+    app.aboutToQuit.connect(app.deleteLater)
