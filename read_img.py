@@ -17,9 +17,13 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QCursor, QFont
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QAction
 from BetterQWidgets import QPlot, ReadFileQWidget
+
+_DEFAULT_TOOLBAR_FONT = QFont("Helvetica", 10)
+_DEFAULT_TEXT_FONT = QFont("Helvetica", 11)
 
 
 class ImagShow(QPlot):
@@ -60,21 +64,31 @@ class TheReadFileQWidget(ReadFileQWidget):
 
 
 class ImagWindow(QW.QMainWindow):
+    _help_str = ""
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.showMaximized()
         self.cenWidget = QW.QWidget()
         self._read_file = TheReadFileQWidget()
         self._imag_show = ImagShow()
         self._exif_table = QW.QTableWidget()
         self._exif_table.setColumnCount(2)
         self._exif_table.setRowCount(7)
-        self._exif_table.setFixedWidth(220)
+        self._exif_table.setFixedWidth(300)
+        self._exif_table.setFixedHeight(400)
+        self._exif_table.setColumnWidth(0, 120)
+        self._exif_table.setColumnWidth(1, 150)
+        self._help_text = QW.QTextEdit()
+        self._help_text.setFont(_DEFAULT_TEXT_FONT)
+        self._help_text.setMidLineWidth(300)
+        self._help_text.setReadOnly(True)
         self.im_data_rgb = None
         self.setCentralWidget(self.cenWidget)
         self.setWindowIcon(QIcon('matplotlib_large.png'))
         self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
         self._set_toolbar()
+        self._set_dockwidget()
         self._set_layout()
 
         self._imag_show.set_focus()
@@ -88,8 +102,15 @@ class ImagWindow(QW.QMainWindow):
 
         self._read_file.toReadFile.connect(_read_file_callback)
 
+    def set_help_str(self):
+        _title_str = "Coded by Liu Jinbao\nEmail : liu.jinbao@outlook.com\n"
+        self._help_text.setText(_title_str + self._help_str)
+
     def get_exif(self, file_path):
-        image = Image.open(file_path)
+        try:
+            image = Image.open(file_path)
+        except:
+            return dict()
         exif = image._getexif()
 
         exif_dict = dict()
@@ -119,29 +140,49 @@ class ImagWindow(QW.QMainWindow):
         self._exif_table.clearContents()
 
     def im_read(self, file_path):
-        im_data_bgr = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+        try:
+            im_data_bgr = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+        except:
+            self.im_data_rgb = np.zeros((1,1,3))
+            return None
         self.im_data_rgb = im_data_bgr[:, :, ::-1]
+        print(self.im_data_rgb.shape)
 
     def im_show(self, cmap=None):
         self._imag_show.imshow(self.im_data_rgb, cmap)
         self._imag_show.set_focus()
 
     def _set_toolbar(self):
-        _to_gray = QAction("ToGray", self)
-        self._toolbar = self.addToolBar('To')
-        self._toolbar.addAction(_to_gray)
-        _to_gray.triggered.connect(lambda: self.im_show(cmap=plt.cm.get_cmap('gray')))
+        # _to_gray = QAction("ToGray", self)
+        # self._toolbar = self.addToolBar('To')
+        # self._toolbar.addAction(_to_gray)
+        # _to_gray.triggered.connect(lambda: self.im_show(cmap=plt.cm.get_cmap('gray')))
+        self._toolbar = self.addToolBar('ThisIsToolBar')
 
     def _set_layout(self):
-        _layout1 = QW.QHBoxLayout()
-        _layout1.addWidget(self._imag_show)
-        _layout1.addWidget(self._exif_table)
-        _layout1.addStretch(1)
         _layout = QW.QVBoxLayout()
-        _layout.addLayout(_layout1)
         _layout.addWidget(self._read_file)
+        _layout.addWidget(self._imag_show)
         _layout.addStretch(1)
         self.cenWidget.setLayout(_layout)
+
+    def _set_dockwidget(self):
+        _default_features = QW.QDockWidget.DockWidgetClosable | QW.QDockWidget.DockWidgetFloatable
+        _list = ["EXIF_INFO", 'Help']
+        _widgets_to_dock = [self._exif_table, self._help_text]
+        _dock_dict = dict()
+        for _, _widget in zip(_list, _widgets_to_dock):
+            _dock_dict[_] = QW.QDockWidget(_, self)
+            _dock_dict[_].setWidget(_widget)
+            _dock_dict[_].setFeatures(_default_features)
+            _dock_dict[_].setVisible(False)
+            _dock_dict[_].setFloating(True)
+            _dock_dict[_].setCursor(QCursor(Qt.PointingHandCursor))
+            _action = _dock_dict[_].toggleViewAction()
+            _action.setChecked(False)
+            _action.setFont(_DEFAULT_TOOLBAR_FONT)
+            _action.setText(_)
+            self._toolbar.addAction(_action)
 
 
 class TheWindow(ImagWindow):
@@ -274,6 +315,14 @@ class TheWindow(ImagWindow):
 
 
 class CalArcLength(ImagWindow):
+    _help_str = r"""
+Shortcuts:
+    z : pan
+    alt + left click  : add a marker.
+    alt + right click : delete the last marker.
+    
+Once clicked. The length value is copied to clipboard.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -282,6 +331,7 @@ class CalArcLength(ImagWindow):
         self.point_position = []
         self.points = []
         self.lines = []
+        self.set_help_str()
 
     def add_a_point(self, x_position, y_position):
         if len(self.point_position) > 0:
