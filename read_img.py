@@ -70,37 +70,37 @@ class ImagWindow(QW.QMainWindow):
         super().__init__(parent)
         self.showMaximized()
         self.cenWidget = QW.QWidget()
+        self.setCentralWidget(self.cenWidget)
+        self.setWindowIcon(QIcon('matplotlib_large.png'))
+        self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
+        # --------------------------------------------------------------------------------------- #
         self._read_file = TheReadFileQWidget()
         self._imag_show = ImagShow()
         self._exif_table = QW.QTableWidget()
+        self._help_text = QW.QTextEdit()
+        self.im_data_rgb = None
+        # --------------------------------------------------------------------------------------- #
+        self._set_exif_table()
+        self._set_help_text()
+        self._set_toolbar()
+        self._set_dockwidget()
+        self._set_layout()
+        self._set_connect()
+
+        self._imag_show.set_focus()
+
+    def _set_exif_table(self):
         self._exif_table.setColumnCount(2)
         self._exif_table.setRowCount(7)
         self._exif_table.setFixedWidth(300)
         self._exif_table.setFixedHeight(400)
         self._exif_table.setColumnWidth(0, 120)
         self._exif_table.setColumnWidth(1, 150)
-        self._help_text = QW.QTextEdit()
+
+    def _set_help_text(self):
         self._help_text.setFont(_DEFAULT_TEXT_FONT)
         self._help_text.setMidLineWidth(300)
         self._help_text.setReadOnly(True)
-        self.im_data_rgb = None
-        self.setCentralWidget(self.cenWidget)
-        self.setWindowIcon(QIcon('matplotlib_large.png'))
-        self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
-        self._set_toolbar()
-        self._set_dockwidget()
-        self._set_layout()
-
-        self._imag_show.set_focus()
-
-        def _read_file_callback():
-            print(self._read_file.path())
-            self.im_read(self._read_file.path())
-            self.im_show()
-            self.clear_exif_info()
-            self.show_exif_info()
-
-        self._read_file.toReadFile.connect(_read_file_callback)
 
     def set_help_str(self):
         _title_str = "Coded by Liu Jinbao\nEmail : liu.jinbao@outlook.com\n"
@@ -143,7 +143,7 @@ class ImagWindow(QW.QMainWindow):
         try:
             im_data_bgr = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
         except:
-            self.im_data_rgb = np.zeros((1,1,3))
+            self.im_data_rgb = np.zeros((1, 1, 3))
             return None
         self.im_data_rgb = im_data_bgr[:, :, ::-1]
         print(self.im_data_rgb.shape)
@@ -183,6 +183,16 @@ class ImagWindow(QW.QMainWindow):
             _action.setFont(_DEFAULT_TOOLBAR_FONT)
             _action.setText(_)
             self._toolbar.addAction(_action)
+
+    def _set_connect(self):
+        def _read_file_callback():
+            # print(self._read_file.path())
+            self.im_read(self._read_file.path())
+            self.im_show()
+            self.clear_exif_info()
+            self.show_exif_info()
+
+        self._read_file.toReadFile.connect(_read_file_callback)
 
 
 class TheWindow(ImagWindow):
@@ -399,8 +409,9 @@ if __name__ == '__main__':
     else:
         app = QW.QApplication.instance()
     app.setStyle(QW.QStyleFactory.create("Windows"))
+    window = ImagWindow()
     # window = TheWindow()
-    window = CalArcLength()
+    # window = CalArcLength()
     window.show()
     # app.exec_()
     app.aboutToQuit.connect(app.deleteLater)

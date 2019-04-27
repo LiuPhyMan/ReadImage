@@ -17,7 +17,7 @@ class DrawLine(object):
         self.line, = ax0.plot([0, 0], [0, 0],
                               color='yellow',
                               linewidth=1.5, linestyle='-.',
-                              alpha=0.5)
+                              alpha=0.8)
         self.in_line, = ax1.plot([], [], '.-')
         self.fwhm_line, = ax1.plot([], [], color='red')
         self.xdata = [None, None]
@@ -75,8 +75,8 @@ class DrawLine(object):
     def plot_line(self):
         self.line.set_xdata(self.xdata)
         self.line.set_ydata(self.ydata)
-        # self.A_mark.set_visible(True)
-        # self.B_mark.set_visible(True)
+        self.A_mark.set_visible(True)
+        self.B_mark.set_visible(True)
         self.A_mark.set_x(self.xdata[0])
         self.A_mark.set_y(self.ydata[0])
         self.B_mark.set_x(self.xdata[1])
@@ -122,10 +122,10 @@ class DrawLine(object):
 
 
 # ----------------------------------------------------------------------------------------------- #
-image_filename_id = 'DSC_0466.jpg'
-im_gray = cv2.imread(r"O:\_EXP_PHOTOS\2018.07.27\JPG\\" + image_filename_id, cv2.IMREAD_GRAYSCALE)
+image_filename_id = 'DSC_9018.jpg'
+im_gray = cv2.imread(r"O:\PC_Backup_11.04\H\Backup\SD\102D7000\\" + image_filename_id, cv2.IMREAD_GRAYSCALE)
 im_color = cv2.applyColorMap(im_gray, cv2.COLORMAP_RAINBOW)
-fig0 = plt.figure(figsize=(14, 11))
+fig0 = plt.figure(figsize=(10, 8))
 ax0 = fig0.add_subplot(111)
 ax0.set_title(image_filename_id)
 ax0.imshow(im_color)
