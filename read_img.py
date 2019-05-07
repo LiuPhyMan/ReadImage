@@ -111,9 +111,14 @@ class ImagWindow(QW.QMainWindow):
             image = Image.open(file_path)
         except:
             return dict()
-        exif = image._getexif()
+        try:
+            exif = image._getexif()
+        except:
+            return dict()
 
         exif_dict = dict()
+        if exif is None:
+            return None
         for tag, value in exif.items():
             key = TAGS.get(tag)
             if key == 'FNumber':
@@ -132,9 +137,12 @@ class ImagWindow(QW.QMainWindow):
 
     def show_exif_info(self):
         exif_info = self.get_exif(self._read_file.path())
-        for i, key in enumerate(exif_info.keys()):
-            self._exif_table.setItem(i, 0, QW.QTableWidgetItem(key))
-            self._exif_table.setItem(i, 1, QW.QTableWidgetItem(exif_info[key]))
+        try:
+            for i, key in enumerate(exif_info.keys()):
+                self._exif_table.setItem(i, 0, QW.QTableWidgetItem(key))
+                self._exif_table.setItem(i, 1, QW.QTableWidgetItem(exif_info[key]))
+        except:
+            return None
 
     def clear_exif_info(self):
         self._exif_table.clearContents()
@@ -336,6 +344,7 @@ Once clicked. The length value is copied to clipboard.
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        super()._set_connect()
         self._imag_show.set_focus()
         self._set_connect()
         self.point_position = []
@@ -409,9 +418,9 @@ if __name__ == '__main__':
     else:
         app = QW.QApplication.instance()
     app.setStyle(QW.QStyleFactory.create("Windows"))
-    window = ImagWindow()
+    # window = ImagWindow()
     # window = TheWindow()
-    # window = CalArcLength()
+    window = CalArcLength()
     window.show()
     # app.exec_()
     app.aboutToQuit.connect(app.deleteLater)
