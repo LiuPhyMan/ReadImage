@@ -72,7 +72,6 @@ class ImagWindow(QW.QMainWindow):
         self.cenWidget = QW.QWidget()
         self.setCentralWidget(self.cenWidget)
         self.setWindowIcon(QIcon('matplotlib_large.png'))
-        self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
         # --------------------------------------------------------------------------------------- #
         self._read_file = TheReadFileQWidget()
         self._imag_show = ImagShow()
@@ -85,7 +84,7 @@ class ImagWindow(QW.QMainWindow):
         self._set_toolbar()
         self._set_dockwidget()
         self._set_layout()
-        self._set_connect()
+        self.__set_connect()
 
         self._imag_show.set_focus()
 
@@ -192,7 +191,7 @@ class ImagWindow(QW.QMainWindow):
             _action.setText(_)
             self._toolbar.addAction(_action)
 
-    def _set_connect(self):
+    def __set_connect(self):
         def _read_file_callback():
             # print(self._read_file.path())
             self.im_read(self._read_file.path())
@@ -207,6 +206,7 @@ class TheWindow(ImagWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setWindowTitle('Read image and calculate the angle arc swept. Code by Liu Jinbao')
         self._set_connect()
 
         self.init_marks()
@@ -419,8 +419,9 @@ if __name__ == '__main__':
         app = QW.QApplication.instance()
     app.setStyle(QW.QStyleFactory.create("Windows"))
     # window = ImagWindow()
-    # window = TheWindow()
-    window = CalArcLength()
-    window.show()
-    # app.exec_()
-    app.aboutToQuit.connect(app.deleteLater)
+    window_0 = TheWindow()
+    window_1 = CalArcLength()
+    window_0.show()
+    window_1.show()
+    app.exec_()
+    # app.aboutToQuit.connect(app.deleteLater)
