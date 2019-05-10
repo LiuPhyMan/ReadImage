@@ -57,8 +57,7 @@ class TheReadFileQWidget(ReadFileQWidget):
         super().__init__(parent)
 
     def _browse_callback(self):
-        _path = QW.QFileDialog.getOpenFileName(caption='Open File',
-                                               filter="imag file (*.jpg)")[0]
+        _path = QW.QFileDialog.getOpenFileName(caption='Open File')[0]
         self._entry.setText(_path)
         self.toReadFile.emit()
 
@@ -344,7 +343,6 @@ Once clicked. The length value is copied to clipboard.
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        super()._set_connect()
         self._imag_show.set_focus()
         self._set_connect()
         self.point_position = []
