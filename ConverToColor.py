@@ -9,11 +9,13 @@ Created on 12:53 2018/8/3
 @IDE:       PyCharm
 """
 
+import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
 from PyQt5 import QtWidgets as QW
 
 import sys
+
 r"""
 sys.path.insert(0, "E:\Coding\Python\ImportToUse")
 from BetterQWidgets import BetterQLabel, BetterButton, QPlot
@@ -48,29 +50,44 @@ if __name__ == '__main__':
     app.aboutToQuit.connect(app.deleteLater)
 """
 
-im_gray = cv.imread(r"N:\JPG\DSC_0268.JPG", cv.IMREAD_GRAYSCALE)
-
+# im_gray = cv.imread(r"O:\_EXP_PHOTOS\2019.05.15\JPG\DSC_0008.JPG", cv.IMREAD_GRAYSCALE)
+# path = r"O:\_EXP_PHOTOS\2019.05.15\NEF\DSC_0007.tif"
+path = r"O:\_EXP_PHOTOS\2019.05.17\JPG\\"
 
 # M = cv.getRotationMatrix2D((2000, 2000), 40, 1.0)
 # im_rotated = cv.warpAffine(im_gray, M, (im_gray.shape[0], im_gray.shape[1]))
 
 
-def rotate_img(_im, angle):
-    M = cv.getRotationMatrix2D((2000, 2000), angle, 1.0)
-    return cv.warpAffine(_im, M, (_im.shape[0], _im.shape[1]))
+# def rotate_img(_im, angle):
+#     M = cv.getRotationMatrix2D((2000, 2000), angle, 1.0)
+#     return cv.warpAffine(_im, M, (_im.shape[0], _im.shape[1]))
 
 
-def show_gray_image(_im_gray):
-    im_color_BGR = cv.applyColorMap(_im_gray, cv.COLORMAP_JET)
-    # matplotlib use RGB, OpenCV use BGR.
-    im_color_RGB = cv.cvtColor(im_color_BGR, cv.COLOR_BGR2RGB)
-    # fig = plt.figure()
-    # axes = fig.add_subplot(111)
-    # plt.imshow(im_color_RGB, vmin=0, vmax=120)
-    plt.imshow(_im_gray, vmin=0, vmax=120)
+# def show_gray_image(_im_gray):
+for i in range(10, 159):
+    print(i)
+    file_path = path + f"DSC_{i:04}.jpg"
+    im_gray = cv.imread(file_path, cv.IMREAD_GRAYSCALE)
 
-show_gray_image(im_gray)
-show_gray_image(rotate_img(im_gray, 15))
+    # scale the range.
+    im_gray = im_gray * 1.6
+    im_gray[im_gray >= 254] = 255
+    im_gray = im_gray.astype(np.uint8)
+
+    print(f"    {im_gray.max()}, {im_gray.min()}")
+    im_color_BGR = cv.applyColorMap(im_gray, cv.COLORMAP_JET)
+    path_to_write = file_path[:-4] + '_JET.tif'
+    cv.imwrite(path_to_write, im_color_BGR)
+# matplotlib use RGB, OpenCV use BGR.
+# im_color_RGB = cv.cvtColor(im_color_BGR, cv.COLOR_BGR2RGB)
+# fig = plt.figure()
+# axes = fig.add_subplot(111)
+# plt.imshow(im_color_RGB, vmin=0, vmax=120)
+# plt.imshow(im_gray)
+# plt.imshow(im_color_RGB)
+
+# show_gray_image(im_gray)
+# show_gray_image(rotate_img(im_gray, 15))
 
 # fig = plt.figure()
 # axes = fig.add_subplot(111)

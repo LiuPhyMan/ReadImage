@@ -11,6 +11,8 @@ Created on 15:05 2018/7/28
 import sys
 import math
 import cv2
+from scipy.optimize import curve_fit
+from lmfit import Model
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -344,7 +346,7 @@ Once clicked. The length value is copied to clipboard.
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        super()._set_connect()
+        # super()._set_connect()
         self._imag_show.set_focus()
         self._set_connect()
         self.point_position = []
@@ -412,6 +414,34 @@ Once clicked. The length value is copied to clipboard.
         clipboard.setText('{a:.2f}'.format(a=self.get_length()))
 
 
+def fit_arc_equation(points):
+    if len(points) < 2:
+        return None
+    _points = np.array(points).transpose()
+    _x = _points[0, 1:] - _points[0, 0]
+    _y = _points[1, 1:] - _points[1, 0]
+    _r = np.sqrt(_x ** 2 + _y ** 2)
+    _r = _r / _r[0] * 5
+    _theta = np.arctan2(_y, _x)
+    _theta = _theta - _theta[0]
+
+    def _arc_equation(r, k1, k2):
+        r0 = 5
+        return k2 * (r - r0)**2 + k1 * (r - r0)
+
+    popt, pcov = curve_fit(_arc_equation, _r, _theta)
+    perr = np.sqrt(np.diag(pcov))
+    print(_r)
+    print(_theta)
+    # print(_r, _theta)
+    print(f"k1: {popt[0]:.1e} +/- {perr[0]:.1e}")
+    print(f"k2: {popt[1]:.1e} +/- {perr[0]:.1e}")
+    plt.plot(_r, _theta)
+    plt.plot(_r, _arc_equation(_r, popt[0], popt[1]))
+
+    return popt, perr
+
+
 if __name__ == '__main__':
     if not QW.QApplication.instance():
         app = QW.QApplication(sys.argv)
@@ -423,5 +453,5 @@ if __name__ == '__main__':
     window_1 = CalArcLength()
     window_0.show()
     window_1.show()
-    app.exec_()
-    # app.aboutToQuit.connect(app.deleteLater)
+    # app.exec_()
+    app.aboutToQuit.connect(app.deleteLater)
