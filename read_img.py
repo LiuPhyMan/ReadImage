@@ -424,21 +424,35 @@ def fit_arc_equation(points):
     _theta = np.arctan2(_y, _x)
     _theta = _theta - _theta[0]
 
-    def _arc_equation(r, k1, k2):
-        r0 = 5
-        return k2 * (r - r0)**2 + k1 * (r - r0)
+    # def _arc_equation(r, k1, k2):
+    #     r0 = 5
+    #     return k2 * (r - r0)**2 + k1 * (r - r0)
 
-    popt, pcov = curve_fit(_arc_equation, _r, _theta)
-    perr = np.sqrt(np.diag(pcov))
+    def _arc_equation(x, k1, k2):
+        r0 = 5
+        return k2 * (x - r0) ** 2 + k1 * (x - r0)
+
+    model = Model(_arc_equation)
+    params = model.make_params(k1=1, k2=1)
+    params['k1'].value = 0
+    params['k1'].vary = False
+    result = model.fit(_theta, params, x=_r)
+
+    # popt, pcov = curve_fit(_arc_equation, _r, _theta)
+    # perr = np.sqrt(np.diag(pcov))
     print(_r)
     print(_theta)
     # print(_r, _theta)
-    print(f"k1: {popt[0]:.1e} +/- {perr[0]:.1e}")
-    print(f"k2: {popt[1]:.1e} +/- {perr[0]:.1e}")
+    # print(f"k1: {popt[0]:.1e} +/- {perr[0]:.1e}")
+    # print(f"k2: {popt[1]:.1e} +/- {perr[0]:.1e}")
+    SSres = ((result.best_fit - _theta) ** 2).sum()
+    SStot = ((_theta - _theta.mean()) ** 2).sum()
+    r_squared = 1 - SSres / SStot
+    print(r_squared)
     plt.plot(_r, _theta)
-    plt.plot(_r, _arc_equation(_r, popt[0], popt[1]))
+    # plt.plot(_r, _arc_equation(_r, popt[0], popt[1]))
 
-    return popt, perr
+    return _r, result
 
 
 if __name__ == '__main__':
@@ -448,9 +462,9 @@ if __name__ == '__main__':
         app = QW.QApplication.instance()
     app.setStyle(QW.QStyleFactory.create("Windows"))
     # window = ImagWindow()
-    window_0 = TheWindow()
+    # window_0 = TheWindow()
     window_1 = CalArcLength()
-    window_0.show()
+    # window_0.show()
     window_1.show()
     # app.exec_()
     app.aboutToQuit.connect(app.deleteLater)
