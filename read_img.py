@@ -455,16 +455,51 @@ def fit_arc_equation(points):
     return _r, result
 
 
+class QWidgetWindow(QW.QMainWindow):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.cenWidget = QW.QWidget()
+        self.setCentralWidget(self.cenWidget)
+        # --------------------------------------------------------------------------------------- #
+        self._button_0 = QW.QPushButton("Cal Arc Length")
+        self._button_1 = QW.QPushButton("Image Window")
+        # self._imag_show = ImagShow()
+        # self._exif_table = QW.QTableWidget()
+        # self._help_text = QW.QTextEdit()
+        # self.im_data_rgb = None
+        _layout = QW.QVBoxLayout()
+        _layout.addWidget(self._button_0)
+        _layout.addWidget(self._button_1)
+        _layout.addStretch(1)
+        self.cenWidget.setLayout(_layout)
+        self._set_connect()
+
+    def _set_connect(self):
+        self._button_0.clicked.connect(CalArcLength)
+        self._button_1.clicked.connect(TheWindow)
+
+
+def CalArcLength():
+    # app = QW.QApplication(sys.argv)
+    window = CalArcLength()
+    window.show()
+    # sys.exit(0)
+
+
+def TheWindow():
+    # app = QW.QApplication(sys.argv)
+    window = TheWindow()
+    window.show()
+    # sys.exit(0)
+
+
 if __name__ == '__main__':
     if not QW.QApplication.instance():
         app = QW.QApplication(sys.argv)
     else:
         app = QW.QApplication.instance()
     app.setStyle(QW.QStyleFactory.create("Windows"))
-    # window = ImagWindow()
-    # window_0 = TheWindow()
-    window_1 = CalArcLength()
-    # window_0.show()
-    window_1.show()
-    # app.exec_()
-    app.aboutToQuit.connect(app.deleteLater)
+    window = QWidgetWindow()
+    window.show()
+    app.exec_()
